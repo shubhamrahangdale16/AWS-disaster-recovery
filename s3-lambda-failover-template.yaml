@@ -1,0 +1,43 @@
+Resources:
+  PrimaryBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: 'primary-bucket01'
+      VersioningConfiguration:
+        Status: 'Enabled'
+  SecondaryBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: 'bucket-secondary02'
+      VersioningConfiguration:
+        Status: 'Enabled'
+  BucketReplication:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: !Ref 'primary-bucket01'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action: 's3:ReplicateObject'
+            Resource: !Sub 'arn:aws:s3:::bucket-secondary02/*'
+            Principal:
+              AWS: !GetAtt 'ReplicationRole.Arn'
+  ReplicationRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 's3.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'ReplicationPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action: 's3:ReplicateObject'
+                Resource: !Sub 'arn:aws:s3:::primary-bucket01/*'
